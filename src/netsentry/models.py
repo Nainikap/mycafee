@@ -207,6 +207,7 @@ class Flow:
     last_seen: float
     ip_class: str
     source: str = "socket"  # socket | packet
+    inbound: bool = False  # accepted on one of our listening ports (we are the server)
     domain: str | None = None
     sni: str | None = None
     dest: str | None = None  # registrable domain or IP prefix, set once naming is settled

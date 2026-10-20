@@ -79,7 +79,7 @@ class Enricher:
             try:
                 host = await asyncio.wait_for(loop.run_in_executor(None, socket.gethostbyaddr, ip), 3.0)
                 name: str | None = host[0].lower()
-            except (OSError, TimeoutError, asyncio.TimeoutError):
+            except (OSError, TimeoutError):
                 name = None
             self._rdns[ip] = (name, time.time())
             self._inflight.discard(ip)

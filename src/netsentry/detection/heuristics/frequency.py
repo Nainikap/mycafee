@@ -33,7 +33,7 @@ class Frequency(BaseHeuristic):
         ip_dest = win.ip_dest()
         remotes = win.remotes()
         horizon = ctx.cfg.engine.bucket_s * ctx.cfg.engine.window_buckets
-        for ip, starts in win.starts.items():
+        for (ip, port), starts in win.starts.items():
             if len(starts) < min_events or win.now - starts[-1] > horizon:
                 continue
             dest, domain = ip_dest.get(ip), remotes.get(ip)
@@ -56,7 +56,7 @@ class Frequency(BaseHeuristic):
             elif not ctx.system_mature:
                 s *= float(h.get("known_dest_factor", 0.3))
                 note = " (damped while learning)"
-            cands.append((s, f"{len(ts)} connections to {domain or ip} every {mean:.1f} s ± {sd:.1f} s "
+            cands.append((s, f"{len(ts)} connections to {domain or ip}:{port} every {mean:.1f} s ± {sd:.1f} s "
                              f"(cv {cv:.2f}){note}"))
         s, ev = best(cands)
         return self.result(ctx, s, ev)

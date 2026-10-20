@@ -36,7 +36,6 @@ class LiveSource:
         self.sniffer = None
         self.full_mode = False
         self.mode_reason = ""
-        self._last_gc = time.time()
 
     async def start(self) -> None:
         if not self._want_sniff:
@@ -65,9 +64,6 @@ class LiveSource:
                        processes=processes, idle_s=idle_seconds())
         if self.sniffer is not None:
             tick.packets, tick.dns, tick.tls, tick.pcap_recv = self.sniffer.drain()
-        if ts - self._last_gc > 30:
-            self._last_gc = ts
-            await loop.run_in_executor(None, self.resolver.gc)
         return tick
 
     async def stop(self) -> None:

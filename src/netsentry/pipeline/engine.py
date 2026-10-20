@@ -18,7 +18,7 @@ from ..config import DEFAULT_CONFIG_DIR, Config, StaticLists, load_config
 from ..detection import scorer
 from ..detection.alerts import AlertEvent, AlertManager, app_label
 from ..detection.baseline import Baseline
-from ..detection.features import Bucket, FeatureExtractor
+from ..detection.features import FeatureExtractor
 from ..detection.heuristics import ALL as HEURISTICS
 from ..detection.heuristics import HeuristicContext
 from ..detection.policy import PolicyEngine

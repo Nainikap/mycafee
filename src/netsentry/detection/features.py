@@ -54,7 +54,7 @@ class AppState:
     current: Bucket
     closed: deque[Bucket]
     process: ProcessInfo | None = None
-    starts: dict[str, deque[float]] = field(default_factory=dict)  # raddr -> flow start times
+    starts: dict[tuple[str, int], deque[float]] = field(default_factory=dict)  # (raddr, rport) -> starts
     last_activity: float = 0.0
 
 
@@ -65,7 +65,7 @@ class AppWindow:
     app_id: str
     buckets: list[Bucket]  # oldest first, current last
     process: ProcessInfo | None
-    starts: dict[str, deque[float]]
+    starts: dict[tuple[str, int], deque[float]]
     now: float
 
     @property
@@ -153,12 +153,17 @@ class FeatureExtractor:
             st.process = proc
         b = st.current
         b.remotes.setdefault(f.raddr, f.domain)
+        if f.inbound:  # we are the server: the remote port is the client's ephemeral port, not a service
+            st.last_activity = max(st.last_activity, start)
+            self.dirty.add(f.app_id)
+            return
         b.rports.setdefault((f.proto, f.rport), set()).add(f.raddr)
         if count:
             b.new_flows += 1
-            q = st.starts.get(f.raddr)
+            key = (f.raddr, f.rport)
+            q = st.starts.get(key)
             if q is None:
-                q = st.starts[f.raddr] = deque(maxlen=self.max_starts)
+                q = st.starts[key] = deque(maxlen=self.max_starts)
             q.append(start)
         st.last_activity = max(st.last_activity, start)
         self.dirty.add(f.app_id)

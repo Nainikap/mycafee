@@ -22,6 +22,7 @@ class FlowTable:
         self.flows: dict[FlowKey, Flow] = {}
         self.close_after = close_after_misses
         self.ignore_loopback = ignore_loopback
+        self._listening: set[tuple[str, int]] = set()
 
     def pid_of(self, key: FlowKey) -> int | None:
         f = self.flows.get(key)
@@ -35,6 +36,7 @@ class FlowTable:
         ch = FlowChanges()
         seen: set[FlowKey] = set()
         opened: set[FlowKey] = set()
+        self._listening = {(s.proto, s.lport) for s in tick.listens if s.proto == "udp" or s.status == "LISTEN"}
 
         for s in tick.sockets:
             k = s.key
@@ -85,7 +87,9 @@ class FlowTable:
         if cls == "unspecified" or (self.ignore_loopback and cls == "loopback"):
             return None
         app = UNKNOWN_APP if unknown else (proc.app_id if proc else f"pid:{pid}")
-        f = Flow(key=k, pid=pid, app_id=app, opened_at=now, last_seen=now, ip_class=cls, source=source)
+        inbound = k[0] == "tcp" and (k[0], k[2]) in self._listening
+        f = Flow(key=k, pid=pid, app_id=app, opened_at=now, last_seen=now, ip_class=cls, source=source,
+                 inbound=inbound)
         self.flows[k] = f
         return f
 

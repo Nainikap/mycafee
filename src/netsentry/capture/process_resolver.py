@@ -2,13 +2,9 @@
 
 from __future__ import annotations
 
-import time
-
 import psutil
 
 from ..models import ProcessInfo
-
-REVALIDATE_S = 15.0  # how often a cached PID is checked for reuse (the check costs ~10 ms on Windows)
 
 _SPECIAL = {0: "system idle", 4: "system"}
 
@@ -34,10 +30,13 @@ class ProcessResolver:
     def __init__(self, max_parents: int = 4) -> None:
         self.max_parents = max_parents
         self._cache: dict[int, ProcessInfo] = {}
-        self._checked: dict[int, float] = {}
         self._ppids: dict[int, int] | None = None
 
     def resolve_many(self, pids: set[int]) -> dict[int, ProcessInfo]:
+        """Resolve a poll's worth of PIDs. Exited PIDs are evicted first: a PID cannot be reused while its
+        process still exists, so evicting on exit (one cheap EnumProcesses call per poll) is enough to keep
+        (pid -> process) correct without re-checking create times, which costs ~15 ms per PID on Windows."""
+        self.gc()
         self._ppids = _ppid_map() if any(p not in self._cache for p in pids) else None
         try:
             return {pid: self.resolve(pid) for pid in pids}
@@ -46,26 +45,16 @@ class ProcessResolver:
 
     def resolve(self, pid: int) -> ProcessInfo:
         cached = self._cache.get(pid)
-        now = time.monotonic()
         if cached is not None:
-            if not cached.create_time or now - self._checked.get(pid, 0.0) < REVALIDATE_S:
-                return cached
-            self._checked[pid] = now
-            try:
-                if psutil.Process(pid).create_time() == cached.create_time:
-                    return cached
-            except (psutil.NoSuchProcess, psutil.AccessDenied, ProcessLookupError):
-                return cached  # it just died; the last known identity is the best we have
+            return cached
         info = self._read(pid)
         self._cache[pid] = info
-        self._checked[pid] = now
         return info
 
     def gc(self) -> None:
         live = set(psutil.pids())
         for pid in [p for p in self._cache if p not in live]:
             del self._cache[pid]
-            self._checked.pop(pid, None)
 
     def _read(self, pid: int) -> ProcessInfo:
         if pid in _SPECIAL:
