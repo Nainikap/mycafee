@@ -1,0 +1,3 @@
+# Known-bad domains, one per line. A domain also matches all of its sub-domains.
+# Example (reserved .invalid TLD — safe for demos):
+malware-c2.invalid

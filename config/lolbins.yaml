@@ -1,0 +1,19 @@
+# Process-lineage lists for H7. Names are matched case-insensitively.
+
+# Script hosts / living-off-the-land binaries that rarely need the network themselves.
+script_hosts: [powershell.exe, pwsh.exe, cmd.exe, wscript.exe, cscript.exe, mshta.exe, rundll32.exe,
+               regsvr32.exe, certutil.exe, bitsadmin.exe, msbuild.exe, installutil.exe, wmic.exe]
+
+# Parents that should never spawn a script host that then talks to the internet.
+suspicious_parents: [winword.exe, excel.exe, powerpnt.exe, outlook.exe, onenote.exe, msaccess.exe,
+                     acrord32.exe, acrobat.exe, foxitreader.exe, chrome.exe, msedge.exe, firefox.exe,
+                     brave.exe, opera.exe, teams.exe, ms-teams.exe]
+
+# Windows system binaries: if a process has one of these names but runs from
+# anywhere other than the system directories, it is masquerading.
+system_binaries: [svchost.exe, lsass.exe, csrss.exe, services.exe, smss.exe, winlogon.exe, wininit.exe,
+                  explorer.exe, spoolsv.exe, taskhostw.exe, dllhost.exe, conhost.exe, lsaiso.exe]
+system_dirs: ['c:\windows\system32\', 'c:\windows\syswow64\', 'c:\windows\']
+
+# User-writable folders malware likes to run from.
+staging_paths: ['\appdata\local\temp\', '\downloads\', '\users\public\', '\windows\temp\', '\$recycle.bin\']

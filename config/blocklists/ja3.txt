@@ -1,0 +1,2 @@
+# Known-bad JA3 or JA3N hashes (32 hex chars), one per line, optional "  # label".
+# Source suggestion: abuse.ch SSLBL JA3 fingerprints.

@@ -1,0 +1,43 @@
+# NetSentry rules — every weight and threshold the engine uses.
+# Edit while NetSentry is running: the file is re-read within ~10 s.
+# See docs/04-detection-engine.md for what each value means.
+version: 1
+
+engine:
+  poll_interval_s: 2
+  bucket_s: 60
+  window_buckets: 5
+  learning_period_h: 24
+  min_buckets_mature: 30
+  include_lan: true
+  ignore_loopback: true
+  retention_days: 7
+
+baseline:
+  ewma_alpha: 0.02
+  min_std: 0.5
+  z_lo: 3
+  z_hi: 6
+
+severity:
+  low: 25
+  medium: 50
+  high: 75
+  alert_min: medium
+  resolve_after_s: 300
+  dedupe_cooldown_s: 900
+
+heuristics:
+  unusual_port:    { enabled: true, weight: 0.45 }
+  frequency:       { enabled: true, weight: 0.55, min_new_flows: 10, beacon_min_events: 6, cv_full: 0.10, cv_zero: 0.35, known_dest_factor: 0.3, min_interval_standard_s: 10 }
+  new_destination: { enabled: true, weight: 0.35, direct_ip_bonus: 0.2, lan_factor: 0.5 }
+  volume:          { enabled: true, weight: 0.60, min_bytes_out_per_min: 5000000, new_app_abs_bytes: 50000000 }
+  blocklist:       { enabled: true, weight: 0.95, override_min_score: 80, allowed_cap: 60 }
+  off_hours:       { enabled: true, weight: 0.25, idle_threshold_s: 600, quiet_hours: ["01:00", "06:00"], min_hour_share: 0.02, min_new_flows: 3, min_bytes_out: 1000000 }
+  lineage:         { enabled: true, weight: 0.60 }
+  tls_fingerprint: { enabled: true, weight: 0.35 }
+
+# Overrides applied by `--profile demo` so the whole story fits in a 15-minute demo.
+profiles:
+  demo:
+    engine: { learning_period_h: 0.17, min_buckets_mature: 5 }

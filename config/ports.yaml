@@ -1,0 +1,19 @@
+# Remote ports that ordinary applications use. A mature app using a port outside
+# this list for the first time scores 0.5 on H1 (0.6 if the port is >= 49152).
+common_ports: [20, 21, 22, 25, 53, 67, 68, 80, 110, 123, 137, 138, 139, 143, 389, 443, 445, 465, 587, 636,
+               853, 993, 995, 1900, 3478, 3479, 3480, 3481, 5222, 5223, 5228, 5353, 5355, 7680, 8080, 8443, 19302]
+
+# Ports strongly associated with C2 / backdoors / remote shells. Any use scores 1.0 on H1.
+suspicious_ports:
+  23: telnet
+  1337: leet backdoor
+  4444: Metasploit default
+  5555: Android ADB / common RAT
+  6666: IRC botnet
+  6667: IRC botnet
+  6668: IRC botnet
+  6669: IRC botnet
+  9001: Tor ORPort
+  9030: Tor DirPort
+  12345: NetBus
+  31337: Back Orifice
