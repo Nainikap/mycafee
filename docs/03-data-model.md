@@ -15,13 +15,16 @@ PacketStat   (flow_key, bytes_out, bytes_in, pkts_out, pkts_in, first_ts, last_t
 DnsAnswer    (ip, qname, ttl, ts)
 TlsHello     (flow_key, sni, ja3, ja3n, tls_version, ts)
 
-Flow         (flow_key, proc_key, app_id, domain, ip_class, opened_at, last_seen, closed_at,
-              bytes_out, bytes_in, ja3n, state)
-Bucket       (app_id, minute_ts, new_flows, flow_start_ts: list[float], dests: Counter[str],
-              rports: Counter[int], bytes_out, bytes_in, ja3s: set[str], idle_seconds_max, lineage)
-AppWindow    (app_id, buckets: deque[Bucket] (len ≤ 5), current: Bucket, process: ProcessInfo)
+Flow         (flow_key, pid, app_id, domain, dest, ip_class, inbound, source: socket|packet, opened_at,
+              last_seen, closed_at, bytes_out, bytes_in, sni, ja3n, misses)
+Bucket       (app_id, minute_ts, new_flows, dests: Counter[str], dest_info, remotes: {ip: domain},
+              rports: {(proto, port): ips}, listen_ports, ip_bytes_out, bytes_out, bytes_in, ja3: {ja3n: ja3},
+              idle_max, max_score, max_severity, marked_normal)
+AppWindow    (app_id, buckets: last ≤5 closed + current, process: ProcessInfo,
+              starts: {(raddr, rport): deque[start_ts] (≤ 20)}, now)
 Baseline     (app_id, first_seen, n_buckets, ewma: dict[feature → (mean, var)],
-              known_dests: dict[str → first_seen], known_ports: set[int], known_ja3n: set[str],
+              known_dests: dict[str → (first_seen, hits)], known_ports: set[int] (LISTEN ports negated),
+              known_ja3n: set[str],
               hour_hist: list[int] (24), talker: bool)
 HeuristicResult (name, score: float|None, weight, evidence: str, data: dict)   # score None = unavailable
 Verdict      (app_id, ts, score: int 0..100, severity, results: list[HeuristicResult], policy: str|None)
@@ -35,6 +38,8 @@ PolicyRule   (id, scope: app|dest|app+dest, app_id?, dest?, action: allow|deny|m
 The database lives at `%LOCALAPPDATA%\NetSentry\netsentry.db` (overridable with `--db`). It uses `PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;`. Schema versions are tracked with `PRAGMA user_version`, and migrations are numbered `.sql` files.
 
 ```sql
+CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);   -- e.g. system_first_seen (learning start)
+
 CREATE TABLE apps (
   app_id        TEXT PRIMARY KEY,           -- lower-cased exe path
   name          TEXT NOT NULL,

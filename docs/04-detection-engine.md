@@ -49,9 +49,10 @@ Each heuristic is a pure function `(window, baseline, ctx) → HeuristicResult(s
 | Sub-rule | Score |
 |----------|-------|
 | Remote port is in `suspicious_ports` (4444, 1337, 31337, 6666–6669, 5555, 9001, 9030, 12345, 23) | 1.0 |
-| Mature app, port not in `common_ports` and never used by this app before | 0.5 (0.6 if the port is ≥ 49152) |
-| A mature app that has never used the network (`talker = false`) opens an external connection | 0.6 |
+| Mature app, **TCP** port not in `common_ports` and never used by this app before (UDP is skipped: WebRTC, games and VoIP use random high ports) | 0.5 (0.6 if the port is ≥ 49152) |
 | The app opens a new `LISTEN` port it has never listened on, bound to a non-loopback address | 0.5 |
+
+**Inbound** connections (accepted on one of the app's own `LISTEN` ports) are skipped, because their remote port is the client's ephemeral port, not a service.
 
 Evidence example: `connected to 185.x.x.x:4444 (suspicious port: Metasploit default)`
 
@@ -59,7 +60,7 @@ Evidence example: `connected to 185.x.x.x:4444 (suspicious port: Metasploit defa
 | Sub-rule | Score |
 |----------|-------|
 | **Rate:** `dev(new_flows)` for the current minute, and only if `new_flows ≥ 10` (mature apps) | 0…1 |
-| **Beacon:** for any (app, dest) with ≥ 6 recorded starts, `cv = std/mean` of the inter-arrival times. `cv ≤ 0.10` → 1.0, `cv ≥ 0.35` → 0, linear in between. If the dest is already known and the app is mature, the score is ×0.3, because heartbeats such as Teams or Slack are normal. | 0…1 |
+| **Beacon:** for any (app, remote ip:port) with ≥ 6 recorded starts in the last 5 min, `cv = std/mean` of the inter-arrival times. `cv ≤ 0.10` → 1.0, `cv ≥ 0.35` → 0, linear in between. The score is ×0.3 if the dest is already known to a mature app (heartbeats such as Teams or Slack are normal) **or** while NetSentry is still learning (otherwise every heartbeat would alert on day one). | 0…1 |
 
 In standard mode, start times come from the 2 s polls, so only intervals ≥ 10 s are trusted. In full mode, SYN timestamps are exact.
 
@@ -168,7 +169,7 @@ stateDiagram-v2
   FalsePositive --> [*]
 ```
 
-De-duplication key: `(app_id, top_heuristic)`, with a cooldown of 15 min. When a different top heuristic fires for the same app, a new alert opens. An alert's `summary` is built from its top two evidence strings, for example:
+There is **one active alert per app per incident**. While the app stays ≥ Medium, the alert is updated in place (peak score, top heuristic, evidence). If the same app flares up again within the 15 min cooldown after resolving, the old alert is reopened instead of a new one. An alert's `summary` is built from its top two evidence strings, for example:
 `"backup.exe uploaded 212 MB in 1 min to 203.0.113.9 (new destination) while you were idle"`.
 
 ## 4.6 `config/rules.yaml` (default)
