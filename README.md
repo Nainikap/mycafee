@@ -28,6 +28,31 @@ NetSentry watches which process on your machine talks to which host, how often a
                                     └──────── allow / deny / mute / "this is normal" ◄───────────────┘
 ```
 
+## Quickstart (Windows)
+
+```bash
+python -m venv .venv
+.venv\Scripts\pip install -e ".[dev]"
+.venv\Scripts\netsentry doctor
+.venv\Scripts\netsentry run
+```
+
+| Command | What it does |
+|---------|--------------|
+| `netsentry run` | Live dashboard (Textual TUI). Run from an **elevated** terminal for full mode (bytes, DNS, SNI, JA3 via Npcap). Without admin it runs in standard mode with 6 of 8 heuristics. |
+| `netsentry run --profile demo` | Same, with a 10-minute learning period instead of 24 h |
+| `netsentry demo` | Plays a synthetic attack scenario (beacon, exfiltration, blocklist hit, Word → PowerShell) through the real engine. No network needed. |
+| `netsentry run --ui none` | Headless: prints alerts to the console |
+| `netsentry record --out day.jsonl` / `netsentry replay day.jsonl` | Record raw capture, replay it later deterministically |
+| `netsentry status`, `alerts`, `rules`, `export` | Read the database (`%LOCALAPPDATA%\NetSentry\netsentry.db`) |
+| `netsentry allow/deny/mute --app onedrive.exe [--dest example.com]` | Feedback rules; a running engine picks them up within 10 s |
+
+TUI keys: `enter` details · `a` allow · `d` deny · `m` mute 1 h · `n` this is normal · `k` acknowledge · `f` only flagged · `q` quit.
+
+Tuning lives in [config/rules.yaml](config/rules.yaml) (weights and thresholds), [config/ports.yaml](config/ports.yaml), [config/lolbins.yaml](config/lolbins.yaml) and [config/blocklists/](config/blocklists). All of them are reloaded while running.
+
+Attack simulators for validation are in [tools/simulate/sim.py](tools/simulate/sim.py) (see [doc 7](docs/07-validation.md)). Tests: `.venv\Scripts\python -m pytest`.
+
 ## Status
 
-Design phase. Building starts with Phase 0 in the [build plan](docs/06-build-plan.md).
+Phases P0–P7 of the [build plan](docs/06-build-plan.md) are implemented: capture, storage, sniffer, baselines, all 8 heuristics, TUI, CLI, simulators and tests. The P8 stretch goals (FastAPI + web dashboard, AbuseIPDB reputation, desktop toasts) are not started.

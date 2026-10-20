@@ -212,6 +212,11 @@ class NetSentryApp(App[None]):
             return None
         return self._rows[table.cursor_row].app_id
 
+    def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
+        # DataTable consumes Enter itself (as "row selected"), so the app-level binding never fires there.
+        if event.data_table.id == "apps":
+            self.action_details()
+
     def action_details(self) -> None:
         app = self._selected_app()
         if app:

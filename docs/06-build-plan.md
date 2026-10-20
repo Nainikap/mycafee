@@ -38,7 +38,13 @@ flowchart LR
 | Whitelist / blacklist | P5 policy + P6 keys |
 | Honest validation, TP and FP | P7 |
 
-## Decisions to confirm before P0
-1. **Repository/folder:** build in `C:\MyProjects\mycafee` as-is (the package is called `netsentry`), or rename the folder?
-2. **Git:** initialise a repo now and commit per phase? (Recommended.)
-3. **Stretch priority:** web dashboard first, or reputation + toast first?
+## Status (2026-10-20)
+
+| Phase | State |
+|-------|-------|
+| P0–P6 | ✅ done. 54 tests green. Live standard-mode run verified on the dev laptop. |
+| P3 full mode | ✅ implemented and unit-tested (TLS/DNS parsing). Still needs a live run from an elevated terminal (V2/V3 in doc 7). |
+| P7 | 🟡 simulators, record/replay and export done. The live beacon simulation is measured; the rest of doc 7 and the normal-day FP study are still to run. |
+| P8 | ⬜ not started |
+
+Repository: https://github.com/Nainikap/mycafee (package name `netsentry`).
